@@ -2,7 +2,7 @@
 
 
 ## source of files tree
-SRC="src"
+SRC="source"
 EXIT=""
 CONTROL_FILE="./debian/control"
 
