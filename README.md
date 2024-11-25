@@ -1,4 +1,4 @@
-# Debinizador
+# Debianizador
 ----------------------------------------------------------------------
 debianizador
 Version: 1.0-2
