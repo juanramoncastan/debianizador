@@ -16,7 +16,7 @@
 
 # ###########      This is a example of Makefile (toplevel) for debianizador     ###########################
 #                   This make file is used only for creating deb package
-##########################################################################################################@#
+############################################################################################################
 # Version: 1.0-2
 
 # BUILD = "../package-name_version_architecture" given from "debianizador" script
