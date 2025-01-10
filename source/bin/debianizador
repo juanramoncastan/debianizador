@@ -378,26 +378,17 @@ The deb package will be named as package root directory
 with .deb extension:
   Package_Version_Architecture.deb
 
-
-
-
 EOF
 ) | less
 }
 
-
 OPTIONS=$(getopt  -o "hycrl:" -n '$0' -- "$@")
-
-
-
 
 if [ $? != 0 ] ; then
   exit 1 ;
 fi
 
-
 eval set -- "$OPTIONS"
-
 
 while true ; do 
     case $1 in 
