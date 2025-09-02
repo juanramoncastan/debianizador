@@ -14,27 +14,44 @@
 #
 # ----------------------------------------------------------------------
 
-# ###########      This is a example of Makefile (toplevel) for debianizador     ###########################
+# ###########     debianizador  Makefile   ###########################
 #                   This make file is used only for creating deb package
 ############################################################################################################
-# Version: 1.0-2
+# Version: 1.6
 
 # BUILD = "../package-name_version_architecture" given from "debianizador" script
-BUILD = ../debpkg
-PREFIX = /usr/local
-#SRC_PATH = /source
+BUILD = 
+PREFIX = /usr
 BIN_PATH = /bin
-#SHARE_PATH = /share
 
 test:
-	@ echo "This is the first order in makefile"
-	@ echo ">$ make (without order)"
+ifdef BUILD
+	@ echo Build destination: $(BUILD)	
+else
+	@ echo Destination is the system itself
 
-install: 
+	ifeq ($(USER),root))
+		@ echo User: $(USER)
+	else
+		@ echo "User is a normal user: $(USER)"
+		@ echo "Run it as root"
+	endif
+		@ echo
+endif
+
+install: test
 ifneq ($(PREFIX),)
 	mkdir -p $(BUILD)$(PREFIX)$(BIN_PATH)
 	cp .$(BIN_PATH)/* $(BUILD)$(PREFIX)$(BIN_PATH)
 endif
 
-clean:
-	rm $(BUILD)$(PREFIX)$(BIN_PATH)
+uninstall: test
+	@ echo
+	@ echo "uninstall: binaries"
+	@ for F in $$( ls ./bin ) ; do \
+		if [ -f $(BUILD)$(PREFIX)$(BIN_PATH)/$${F} ] ; then \
+			echo Removing $(BUILD)$(PREFIX)$(BIN_PATH)/$${F} && \
+			rm $(BUILD)$(PREFIX)$(BIN_PATH)/$${F} ; \
+		fi ; \
+	done
+	@ echo

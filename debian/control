@@ -1,8 +1,0 @@
-Package: debianizador
-Version: 1.0-2
-Section: devel
-Priority: optional
-Architecture: all
-Depends: 
-Maintainer: Juan Ramon Castan
-Description: Easy and useful Debian Package creator
