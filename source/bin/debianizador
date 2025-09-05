@@ -1,10 +1,27 @@
 #!/bin/bash
 
 
+##### debianizador ########
+# Version: 1.0-4
+
 ## source of files tree
 SRC="source"
 EXIT=""
 CONTROL_FILE="./debian/control"
+
+
+
+function check_user()
+{
+    echo -e "User: ${USER}"
+    if [[ ${UID} = "0" ]] ; then 
+        echo -e "Warning!!!!\nRun \"debianizador\" script as normal user"
+        echo
+        exit 1
+    fi
+}
+
+
 
 function working_directory()
 {
@@ -290,7 +307,6 @@ function prepare()
         mkdir -p "./${BUILD_DEST_DIR}/DEBIAN"
         cp ./debian/* ./${BUILD_DEST_DIR}/DEBIAN/
         cd "./${SRC}"
-        echo ------------- ${WORKING_DIRECTORY}${BUILD_PREFIX}
         ([[ -e ./Makefile ]] && make  "BUILD=${WORKING_DIRECTORY}${BUILD_PREFIX}" install) || exit 1 
         cd ..
     else
@@ -334,11 +350,19 @@ function remove()
 
     ([[ -e ./${BUILD_DEST_DIR} ]] && rm -fR "./${BUILD_DEST_DIR}" && echo -e "Removing ${BUILD_DEST_DIR} directory") || echo "./${BUILD_DEST_DIR} does not exist"
     [[ -e ./${BUILD_DEST_DIR}.deb ]] && rm "./${BUILD_DEST_DIR}.deb" && echo -e "Removing ${BUILD_DEST_DIR}.deb package" || echo "./${BUILD_DEST_DIR}.deb does not exist"
-        echo
+    echo
 }
 
-
-
+function clean()
+{
+    CLEAN_TARGET=$(make -npq : 2> /dev/null |     awk -v RS= -F: '$1 ~ /^[^#%.]+$/ { print $1 }' | grep clean)
+    if [[ -n ${CLEAN_TARGET} ]] ; then
+        make  "BUILD=${WORKING_DIRECTORY}${BUILD_PREFIX}" clean
+    else
+        echo "No existe el objetivo \"clean\" en este Makefile"
+    fi
+    
+}
 
 
 
@@ -412,10 +436,16 @@ while true ; do
                 EXIT="exit 0"
                 shift
                 ;;
+            -c)
+                CLEAN="Y"
+                EXIT="exit 0"
+                shift
+                ;;
             --)
                 echo
                 # Change to  <project_directory> 
                 shift
+                check_user
                 if [[ -n $1 ]] ; then
                     WD=$(realpath ${1})
                     shift
@@ -431,6 +461,10 @@ while true ; do
                 
                 if  [[ -n "${REMOVE}" ]] ; then
                     remove
+                fi
+                
+                if  [[ -n "${CLEAN}" ]] ; then
+                    clean
                 fi
                 ${EXIT}
                 
