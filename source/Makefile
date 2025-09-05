@@ -15,15 +15,11 @@
 # ----------------------------------------------------------------------
 
 # ###########     debianizador  Makefile   ###########################
-#                   This make file is used only for creating deb package
-############################################################################################################
 # Version: 1.0-4
 
 #####  BUILD = "../package-name_version_architecture" given from "debianizador" script
 PREFIX = /usr
 BIN_PATH = /bin
-
-
 
 test:
 	@ echo User: $(USER)
@@ -34,6 +30,7 @@ ifneq ($(PREFIX),)
 	mkdir -p $(BUILD)$(PREFIX)$(BIN_PATH)
 	cp .$(BIN_PATH)/* $(BUILD)$(PREFIX)$(BIN_PATH)
 endif
+
 
 uninstall: test
 	@ echo
