@@ -254,21 +254,6 @@ function edit_file()
 }
 
 
-function edit_file2()
-{
-    local FILE="$1"
-    echo -ne "Do you want to edit \"$FILE\" file (y/N)?"
-    IN=''
-    read -sn1 IN
-    echo
-    if [[ $IN =~ ^[Yy]$ ]] ; then
-        nano "$FILE"
-        read_control_file && edit_file ${FILE}
-    fi
-    echo
-}
-
-
 function change_version()
 {
     # check_version
