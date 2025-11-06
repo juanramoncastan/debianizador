@@ -167,13 +167,12 @@ function autoedit_control_file()
     while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " ARCHITECTURE ; WW="${WW}!" ; [[ -z ${ARCHITECTURE} ]] || break ; done
     sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${ARCHITECTURE}/" ${CONTROL_FILE}
     
-    WW=""
     SEC="Depends"
     DEPENDS=""
     KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
     VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " ARCHITECTURE ; WW="${WW}!" ; [[ -z ${ARCHITECTURE} ]] || break ; done
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${ARCHITECTURE}/" ${CONTROL_FILE}
+    read -r -e -i "${VAL}" -p "${KEY} >> " DEPENDS 
+    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${DEPENDS}/" ${CONTROL_FILE}
     
     WW=""
     SEC="Description"
@@ -217,7 +216,7 @@ function autoedit_control_file()
     
     IFS=$OLDIFS
     echo
-    read_control_file 
+    #read_control_file 
     #edit_file ${CONTROL_FILE}
 }
 
