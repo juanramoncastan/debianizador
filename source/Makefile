@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------
 
 # ###########     debianizador  Makefile   ###########################
-# Version: 1.1
+# Version: 1.3
 
 #####  BUILD = "../package-name_version_architecture" given from "debianizador" script
 PREFIX = /usr
