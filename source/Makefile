@@ -15,20 +15,21 @@
 # ----------------------------------------------------------------------
 
 # ###########     debianizador  Makefile   ###########################
-# Version: 1.3
+# Version: 1.4
 
 #####  BUILD = "../package-name_version_architecture" given from "debianizador" script
+PROJECT=debianizador
 PREFIX = /usr
 BIN_PATH = /bin
 
 test:
+	@ echo Makefile: $(PROJECT)
 	@ echo User: $(USER)
-
 
 install: test
 ifneq ($(PREFIX),)
-	mkdir -p $(BUILD)$(PREFIX)$(BIN_PATH)
-	cp .$(BIN_PATH)/* $(BUILD)$(PREFIX)$(BIN_PATH)
+	@ mkdir -p $(BUILD)$(PREFIX)$(BIN_PATH)
+	@ cp .$(BIN_PATH)/* $(BUILD)$(PREFIX)$(BIN_PATH)
 endif
 
 

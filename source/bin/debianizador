@@ -1,14 +1,15 @@
 #!/bin/bash
 
 
-##### debianizador ########
-# Version: 1.3
+# debianizador 
+# Version: 1.4
+# Author: monon
 
-## source of files tree
+
+
 SRC="/source"
 EXIT=""
-CONTROL_FILE="./debian/control"
-
+control_file="./debian/control"
 
 
 function check_user()
@@ -20,18 +21,17 @@ function check_user()
 }
 
 
-
-function working_directory()
+function set_working_directory()
 {
     echo
-    WORKING_DIRECTORY=${1}
-    if [[ -n "${WORKING_DIRECTORY}" ]] ; then
-        if [[ -d "${WORKING_DIRECTORY}" ]] ; then
-            echo -e "Working directory:\n  ${WORKING_DIRECTORY}"
-            cd ${WORKING_DIRECTORY}
+    working_dir=${1}
+    if [[ -n "${working_dir}" ]] ; then
+        if [[ -d "${working_dir}" ]] ; then
+            echo -e "Working directory:\n  ${working_dir}"
+            cd ${working_dir}
         else
             echo "The directory:"
-            echo "${WORKING_DIRECTORY}"
+            echo "${working_dir}"
             echo "does not exist"
             exit 1
         fi
@@ -47,46 +47,51 @@ function working_directory()
 function check_sources()
 {
     echo
-    if [[ -e "${SOURCE_DIRECTORY}${SRC}"  ]] ; then
-        echo -e "Source directory:\n  ${SOURCE_DIRECTORY}${SRC}"
+    if [[ -e "${source_dir}${SRC}"  ]] ; then
+        echo -e "Source directory:\n  ${source_dir}${SRC}"
     else
-        echo -e "Source directory \"${SOURCE_DIRECTORY}${SRC}\" does not exist"
+        echo -e "Source directory \"${source_dir}${SRC}\" does not exist"
         exit 2
     fi
-
 }
 
 
 function check_control_file()
 {
+    echo
+    echo -e "Checking control file"
+    ## Checking if /debian folder is in the working directory
     if [[ ! -d "./debian" ]] ; then
         echo
         echo "A \"debian\" folder with at least a control file is mandatory"
         echo -ne "Do you want to create \"debian\" folder? (y/N)"
-        IN=''
-        read -sn1 IN
+        input_read=''
+        read -sn1 input_read
         echo
-        if [[ $IN =~ ^[Yy]$ ]] ; then
-            mkdir -p ./debian
+        if [[ $input_read =~ ^[Yy]$ ]] ; then
+            mkdir -p ${working_dir}/debian
         else
             echo "Exiting"
             exit 1
         fi
     fi
     
-    if [[ ! -e ${CONTROL_FILE} ]]  || [[ -z $(cat ${CONTROL_FILE}) ]] ; then
+    ## Checking if control file is into /working_directory/debian folder
+    if [[ ! -e ${control_file} ]]  || [[ -z $(cat ${control_file}) ]] ; then
         echo
         echo "Error: You must to create a control file"
         echo -ne "Do you want to create a \"control\" file? (y/N)"
-        IN=''
-        read -sn1 IN
+        input_read=''
+        read -sn1 input_read
         echo
-        if [[ $IN =~ ^[Yy]$ ]] ; then
+        ## If control file does not exist or it is emmpty it will be created
+        if [[ $input_read =~ ^[Yy]$ ]] ; then
             create_control_file
         else
+            echo "sdfsdfs"
             exit 1
         fi
-    else
+    else  ## If control file exists it will be formated
         echo
         # Formating control file
         (sed -i -e "/^[[:space:]]*$/d" \
@@ -98,8 +103,8 @@ function check_control_file()
         -e "s/^ *\(Architecture:\) *\([[:alnum:]]*\)/\1 \2/" \
         -e "s/^ *\(Depends:\) *\([[:alnum:]]*\)/\1 \2/" \
         -e "s/^ *\([[:alnum:]]\+:\) *\([[:alnum:]]*\)/\1 \2/" \
-        -e '$a\' ${CONTROL_FILE} \
-        && ([[ -s ${CONTROL_FILE}  ]] && echo "Formating \"control\" file")) \
+        -e '$a\' ${control_file} \
+        && ([[ -s ${control_file}  ]] && echo "Formating \"control\" file")) \
         || (echo "Error formating \"control\" file" && exit 1)
     fi
 }
@@ -107,117 +112,119 @@ function check_control_file()
 
 function create_control_file()
 {
-    touch ${CONTROL_FILE}
-    chmod 664 ${CONTROL_FILE}
-    PACKAGE_NAME=$(basename ${SOURCE_DIRECTORY})
-    echo -e "Package: ${PACKAGE_NAME}" >> ${CONTROL_FILE}
-    echo -e "Version: (i.e. 1.0-1)" >> ${CONTROL_FILE}
-    echo -e "Section: (admin|..|devel|games|sound|...)"  >> ${CONTROL_FILE}
-    echo -e "Priority: (required|important|standart|optional|extra)" >> ${CONTROL_FILE}
-    echo -e "Architecture: (all|i386|amd64|...)" >> ${CONTROL_FILE}
-    echo -e "Depends: (foo (>= 1.5.0), bar | baz, qux)" >> ${CONTROL_FILE}
-    echo -e "Maintainer: Juan Ramon Castan" >> ${CONTROL_FILE}
-    echo -e "Description: (empty line finish)" >> ${CONTROL_FILE}
+    touch ${control_file}
+    chmod 664 ${control_file}
+    package_name=$(basename ${source_dir})
+    echo -e "Package: ${package_name}" >> ${control_file}
+    echo -e "Version: (i.e. 1.0-1)" >> ${control_file}
+    echo -e "Section: (admin|..|devel|games|sound|...)"  >> ${control_file}
+    echo -e "Priority: (required|important|standart|optional|extra)" >> ${control_file}
+    echo -e "Architecture: (all|i386|amd64|...)" >> ${control_file}
+    echo -e "Depends: (foo (>= 1.5.0), bar | baz, qux)" >> ${control_file}
+    echo -e "Maintainer: Juan Ramon Castan" >> ${control_file}
+    echo -e "Description: (empty line finish)" >> ${control_file}
     echo
-    autoedit_control_file ${CONTROL_FILE}
+    autoedit_control_file
 }
 
 
 function autoedit_control_file()   
 {
-    local FILE="${1}"
-    
-    WW=""
-    SEC="Package"
-    PACKAGENAME=""
-    KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
-    VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " PACKAGENAME ; WW="${WW}!" ; [[ -z $(echo ${PACKAGENAME} | sed -e "/[^a-zA-Z0-9-]/d") ]] || break ; done
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${PACKAGENAME}/" ${CONTROL_FILE}
-    
-    WW=""
-    SEC="Version"
-    NEWVERSION=""
-    KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
-    VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " NEWVERSION ; WW="${WW}!" ; [[ -z ${NEWVERSION} ]] || [[ ! ${NEWVERSION} =~ ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]] || break ; done
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${NEWVERSION}/" ${CONTROL_FILE}
-    
-    WW=""
-    SEC="Section"
-    SECTION=""
-    KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
-    VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " SECTION ; WW="${WW}!" ; [[ -z ${SECTION} ]] || break ; done
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${SECTION}/" ${CONTROL_FILE} 
 
-    WW=""
-    SEC="Priority"
-    PRIORITY=""
-    KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
-    VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " PRIORITY ; WW="${WW}!" ; [[ -z ${PRIORITY} ]] || break ;  done
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${PRIORITY}/" ${CONTROL_FILE}
+    local warning
+    local section
+    local delete_lines
+    
+    warning=""
+    section="Package"
+    control_package=""
+    section_key=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|"   ${control_file})
+    section_val=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|"   ${control_file})
+    while : ; do read -r -e -i "${section_val}${warning}" -p "${section_key} >> " control_package ; warning="${warning}!" ; [[ -z $(echo ${control_package} | sed -e "/[^a-zA-Z0-9-]/d") ]] || break ; done
+    sed -i -e "s/\(^${section}:\)\( *\)\(.*\)/\1 ${control_package}/" ${control_file}
+    
+    warning=""
+    section="Version"
+    control_version=""
+    section_key=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|"   ${control_file})
+    section_val=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|"   ${control_file})
+    while : ; do read -r -e -i "${section_val}${warning}" -p "${section_key} >> " control_version ; warning="${warning}!" ; [[ -z ${control_version} ]] || [[ ! ${control_version} =~ ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]] || break ; done
+    sed -i -e "s/\(^${section}:\)\( *\)\(.*\)/\1 ${control_version}/" ${control_file}
+    
+    warning=""
+    section="Section"
+    control_section=""
+    section_key=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|"   ${control_file})
+    section_val=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|"   ${control_file})
+    while : ; do read -r -e -i "${section_val}${warning}" -p "${section_key} >> " control_section ; warning="${warning}!" ; [[ -z ${control_section} ]] || break ; done
+    sed -i -e "s/\(^${section}:\)\( *\)\(.*\)/\1 ${control_section}/" ${control_file} 
 
-    WW=""
-    SEC="Architecture"
-    ARCHITECTURE=""
-    KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
-    VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    while : ; do read -r -e -i "${VAL}${WW}" -p "${KEY} >> " ARCHITECTURE ; WW="${WW}!" ; [[ -z ${ARCHITECTURE} ]] || break ; done
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${ARCHITECTURE}/" ${CONTROL_FILE}
+    warning=""
+    section="Priority"
+    control_priority=""
+    section_key=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|"   ${control_file})
+    section_val=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|"   ${control_file})
+    while : ; do read -r -e -i "${section_val}${warning}" -p "${section_key} >> " control_priority ; warning="${warning}!" ; [[ -z ${control_priority} ]] || break ;  done
+    sed -i -e "s/\(^${section}:\)\( *\)\(.*\)/\1 ${control_priority}/" ${control_file}
+
+    warning=""
+    section="Architecture"
+    control_architecture=""
+    section_key=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|"   ${control_file})
+    section_val=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|"   ${control_file})
+    while : ; do read -r -e -i "${section_val}${warning}" -p "${section_key} >> " control_architecture ; warning="${warning}!" ; [[ -z ${control_architecture} ]] || break ; done
+    sed -i -e "s/\(^${section}:\)\( *\)\(.*\)/\1 ${control_architecture}/" ${control_file}
     
-    SEC="Depends"
-    DEPENDS=""
-    KEY=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|"   ${CONTROL_FILE})
-    VAL=$(sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|"   ${CONTROL_FILE})
-    read -r -e -i "${VAL}" -p "${KEY} >> " DEPENDS 
-    sed -i -e "s/\(^${SEC}:\)\( *\)\(.*\)/\1 ${DEPENDS}/" ${CONTROL_FILE}
+    section="Depends"
+    control_depends=""
+    section_key=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|"   ${control_file})
+    section_val=$(sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|"   ${control_file})
+    read -r -e -i "${section_val}" -p "${section_key} >> " control_depends 
+    sed -i -e "s/\(^${section}:\)\( *\)\(.*\)/\1 ${control_depends}/" ${control_file}
     
-    WW=""
-    SEC="Description"
-    DESCRIPTION=""
+    warning=""
+    section="Description"
+    control_description=""
     OLDIFS=${IFS}
     IFS=$'\n'
-    
-    for LINE in $( sed -ne "/^${SEC}:/,/^$/p" ${CONTROL_FILE} ) ; do
-        if [[ -n $(echo -e "${LINE}" | sed -e "/^${SEC}:.*/!d") ]] ; then
-            KEY=$(echo -e "${LINE}" | sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}:\)\(.*\)|\1|" )
-            VAL=$(echo -e "${LINE}" | sed -e "/^${SEC}:.*/!d" -e "s|\(^${SEC}: *\)\(.*\)|\2|" )
+    for ln in $( sed -ne "/^${section}:/,/^$/p" ${control_file} ) ; do
+        if [[ -n $(echo -e "${ln}" | sed -e "/^${section}:.*/!d") ]] ; then
+            section_key=$(echo -e "${ln}" | sed -e "/^${section}:.*/!d" -e "s|\(^${section}:\)\(.*\)|\1|" )
+            section_val=$(echo -e "${ln}" | sed -e "/^${section}:.*/!d" -e "s|\(^${section}: *\)\(.*\)|\2|" )
         else
-            KEY=""
-            VAL=$(echo -e "${LINE}" |  sed -e "s|\(.*$\)|\1|")
+            section_key=""
+            section_val=$(echo -e "${ln}" |  sed -e "s|\(.*$\)|\1|")
         fi
-        VAL=$(echo "${VAL}" | sed -e "s|^ *\(.\+\)|\1|" )
+        section_val=$(echo "${section_val}" | sed -e "s|^ *\(.\+\)|\1|" )
 
 
-        if [[ -n $DELETE_LINES ]] ; then
-                DESCRIPTION=""
+        if [[ -n $delete_lines ]] ; then
+                control_description=""
         else
-            read -r -e -i "${VAL}" -p "${KEY} >> " DESCRIPTION 
-            DESCRIPTION=$(echo $DESCRIPTION | sed -e "s|^ *||g"  )
+            read -r -e -i "${section_val}" -p "${section_key} >> " control_description 
+            control_description=$(echo $control_description | sed -e "s|^ *||g"  )
         fi
         
-        if [[ -n "${DESCRIPTION}" ]] ; then
-            sed -i -e "s|\(^${KEY}\)\( *\)\(${VAL}\)|\1 ${DESCRIPTION}|" ${CONTROL_FILE} 
+        if [[ -n "${control_description}" ]] ; then
+            sed -i -e "s|\(^${section_key}\)\( *\)\(${section_val}\)|\1 ${control_description}|" ${control_file} 
         else
-            sed -i -e "/^.*${VAL}$/d" ${CONTROL_FILE}
-            DELETE_LINES="y"
+            sed -i -e "/^.*${section_val}$/d" ${control_file}
+            delete_lines="y"
         fi
     done
-    if [[ -z $DELETE_LINES ]] ; then
+    if [[ -z $delete_lines ]] ; then
         while : ; do
-            read -r -e -p " >> " DESCRIPTION
-            DESCRIPTION=$(echo $DESCRIPTION | sed -e "s|^ *||"  )
-            echo " ${DESCRIPTION}" >> ${CONTROL_FILE}
-            [[ -n "${DESCRIPTION}" ]] || break
+            read -r -e -p " >> " control_description
+            control_description=$(echo ${control_description} | sed -e "s|^ *||"  )
+            echo " ${control_description}" >> ${control_file}
+            [[ -n "${control_description}" ]] || break
         done
     fi
     
     IFS=$OLDIFS
     echo
     #read_control_file 
-    #edit_file ${CONTROL_FILE}
+    #edit_file ${control_file}
 }
 
 
@@ -226,19 +233,19 @@ function read_control_file()
     check_control_file
 
     # Taking vars from control file
-    PACKAGE=$(sed -e '/^Package/!d' -e 's/Package:[[:space:]]\+\([[:alnum:]]\+\)\.*/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
-    VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
-    ARCH=$(sed -e '/^Architecture/!d' -e 's/Architecture:[[:space:]]\+\([[:alnum:]]\+\)/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
-    BUILD_DEST_DIR="${PACKAGE}_${VERSION}_${ARCH}"
-    BUILD_PREFIX="/${BUILD_DEST_DIR}"
+    package=$(sed -e '/^Package/!d' -e 's/Package:[[:space:]]\+\([[:alnum:]]\+\)\.*/\1/' -e "s/[[:space:]]\+//g" ${control_file})
+    version=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${control_file})
+    arch=$(sed -e '/^Architecture/!d' -e 's/Architecture:[[:space:]]\+\([[:alnum:]]\+\)/\1/' -e "s/[[:space:]]\+//g" ${control_file})
+    buld_dest_dir="${package}_${version}_${arch}"
+    build_prefix="/${buld_dest_dir}"
     # Show control file
     echo "********** control file *************"
-    cat ${CONTROL_FILE}
+    cat ${control_file}
     echo "*************************************"
 
     echo
     echo -e "debian package root directory:"
-    echo -e "\t$(basename ${BUILD_PREFIX})"
+    echo -e "\t$(basename ${build_prefix})"
     echo
 
 }
@@ -246,22 +253,22 @@ function read_control_file()
 
 function edit_file()
 {
-    local FILE="$1"
-    echo -ne "Do you want to edit \"$FILE\" file (a/e/N)?"
-    IN=''
-    read -sn1 IN
+    local file="$1"
+    echo -ne "Do you want to edit \"$file\" file (a/e/N)?"
+    input_read=''
+    read -sn1 input_read
     echo
-    case $IN in
+    case $input_read in
         [Aa])
-            autoedit_control_file "$FILE"
-            read_control_file && edit_file ${FILE}
+            autoedit_control_file
+            read_control_file && edit_file ${file}
             ;;
         [Ee])
-            nano "${FILE}"
-            read_control_file && edit_file ${FILE}
+            nano "${file}"
+            read_control_file && edit_file ${file}
             ;;
         *)
-            echo "Skiping edit $FILE file "
+            echo "Skiping edit $file file "
             ;;
     esac
     echo
@@ -270,71 +277,56 @@ function edit_file()
 
 function change_version()
 {
-    # check_version
-    WW=""
-    VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
-    while [[ -z ${VERSION} ]] || [[ ! ${VERSION} =~ ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]]  ; do
-        echo -e "Please, set version${WW}"
-        NEWVERSION=''
-        sed "/^Version:.*/!d" ${CONTROL_FILE}
-        read -p ">> " NEWVERSION ; WW="${WW}!!"
-        sed -i -e "s/\(^Version:\)\( *\)\(.*\)/\1 ${NEWVERSION}/" ${CONTROL_FILE}
-        VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
+    ##################################################################
+    ## Change version of files than have the next format inside:
+    ## Version: X.X[.X][-something]
+    ## With or without # initial comment character
+    ## Usually "control" file
+    ##         "README" file
+    ##         "Makefile"
+    ##################################################################
+    warning=""
+    version=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${control_file})
+    while [[ -z ${version} ]] || [[ ! ${version} =~ ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]]  ; do
+        echo -e "Please, set version${warning}"
+        new_version=''
+        sed "/^Version:.*/!d" ${control_file}
+        read -p ">> " new_version ; warning="${warning}!!"
+        sed -i -e "s/\(^Version:\)\( *\)\(.*\)/\1 ${new_version}/" ${control_file}
+        version=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${control_file})
     done
 
-    FILES=$(find -L ${SOURCE_DIRECTORY} -type f -not -name "control" \( -exec grep -l -e "^#\{0,1\}[[:space:]]*Version:[[:space:]]\+[[:digit:]]\+.*" {} \; \)  )
-    echo -e "Changing the next files to \"Version: ${VERSION}\""
-    echo $FILES
-    for F in ${FILES} ; do
-        echo -e "${F}, with $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${F})"
-        sed  -i -e "s|\(Version:[[:space:]]\+\)\([[:digit:]]\+.*\)|\1${VERSION}|g" ${F}
-        echo -e "Changed to $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${F})"
-    done
-    echo
-}
-
-
-function change_version2()
-{
-    # check_version
-    if [[ ! ${VERSION} =~  ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]] || [[ -z ${VERSION} ]]  ; then
-        echo -e "Please, set version?"
-        NEWVERSION=''
-        sed "/^Version:.*/!d" ${CONTROL_FILE}
-        while [[ -z ${NEWVERSION} ]] || [[ ! ${NEWVERSION} =~ ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]]; do read -p "${WW}>> " NEWVERSION ; WW="!" ; done
-        sed -i -e "s/\(^Version:\)\( *\)\(.*\)/\1 ${NEWVERSION}/" ${CONTROL_FILE}
-        read_control_file && edit_file ${CONTROL_FILE}
-    fi
-    FILES=$(find -L ${SOURCE_DIRECTORY} -type f -not -name "control" \( -exec grep -l -e "^#\{0,1\}[[:space:]]*Version:[[:space:]]\+[[:digit:]]\+.*" {} \; \)  )
-    echo -e "Changing the next files to \"Version: ${VERSION}\""
-    echo $FILES
-    for F in ${FILES} ; do
-        echo -e "${F}, with $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${F})"
-        sed  -i -e "s|\(Version:[[:space:]]\+\)\([[:digit:]]\+.*\)|\1${VERSION}|g" ${F}
-        echo -e "Changed to $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${F})"
+    files_w_version=$(find -L ${source_dir} -type f -not -name "control" \( -exec grep -l -e "^#\{0,1\}[[:space:]]*Version:[[:space:]]\+[[:digit:]]\+.*" {} \; \)  )
+    echo -e "Changing the next files to \"Version: ${version}\""
+    for file in ${files_w_version} ; do
+        echo -ne "From $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${file})"
+        sed  -i -e "s|\(Version:[[:space:]]\+\)\([[:digit:]]\+.*\)|\1${version}|g" ${file}
+        echo -e " to Version: $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${file})\n\t${file}"
     done
     echo
 }
+
 
 function prepare()
 {
-    IN=${1}
-    if [[ ! ${IN} ]] ; then
+    input_read=${1}
+    if [[ ! ${input_read} ]] ; then
         echo -ne "Do you want to PREPARE the files tree of DEB package\nusing \"Makefile\" and \"control\" file (y/N)?"
-        read -sn1 IN
+        read -sn1 input_read
         echo
     fi
-    if [[ $IN =~ ^[Yy]$ ]] ; then
+    if [[ $input_read =~ ^[Yy]$ ]] ; then
         echo "Preparing files tree to build the package"
         [[ -e .debian/preinst ]] && chmod +x .debian/preinst
         [[ -e .debian/prerm ]] && chmod +x .debian/prerm
         [[ -e .debian/postinst ]] && chmod +x .debian/postinst
         [[ -e .debian/postrm ]] && chmod +x .debian/postrm
-        mkdir -p "./${BUILD_DEST_DIR}/DEBIAN"
-        cp ./debian/* ./${BUILD_DEST_DIR}/DEBIAN/
-        cd "${SOURCE_DIRECTORY}${SRC}"
-        echo "${SOURCE_DIRECTORY}${SRC}"
-        ([[ -e ./Makefile ]] && make  "BUILD=${WORKING_DIRECTORY}${BUILD_PREFIX}" install) || exit 1 
+        mkdir -p "./${buld_dest_dir}/DEBIAN"
+        cp ./debian/* ./${buld_dest_dir}/DEBIAN/
+        cd "${source_dir}${SRC}"
+        echo "${source_dir}${SRC}"
+        echo
+        ([[ -e ./Makefile ]] && make  "BUILD=${working_dir}${build_prefix}" install) || exit 1 
     else
         exit 0
     fi
@@ -344,19 +336,19 @@ function prepare()
 
 function create()
 {
-    IN=${1}
-    if [[ ! ${IN} ]] ; then
-        echo -ne "Do you want to BUILD the package ${BUILD_DEST_DIR}.deb (y/N)?"
-        read -sn1 IN
+    input_read=${1}
+    if [[ ! ${input_read} ]] ; then
+        echo -ne "Do you want to BUILD the package ${buld_dest_dir}.deb (y/N)?"
+        read -sn1 input_read
         echo
     fi
     
-    if [[ $IN =~ ^[Yy]$ ]] ; then
+    if [[ $input_read =~ ^[Yy]$ ]] ; then
         echo
-        cd "${WORKING_DIRECTORY}"
+        cd "${working_dir}"
         echo "Building the package"
-        echo "${BUILD_DEST_DIR}"
-        fakeroot dpkg-deb --build "${BUILD_DEST_DIR}" || exit 1
+        echo "${buld_dest_dir}"
+        fakeroot dpkg-deb --build "${buld_dest_dir}" || exit 1
     else
         echo "Skiping package built"
         exit 0
@@ -367,7 +359,7 @@ function create()
 
 function remove()
 {
-    cd "${WORKING_DIRECTORY}"
+    cd "${working_dir}"
     echo -e "Removing debian root directory, package and symbolic link"
     read_control_file  > /dev/null
     if [[ $(find . -maxdepth 1 -mindepth 1 -type l) =~ "${SRC}" ]] ; then
@@ -376,16 +368,16 @@ function remove()
         echo "Symbolic link \"${SRC}\" does not exist"
     fi
 
-    ( [[ -d ./${BUILD_DEST_DIR} ]] && rm -fR "./${BUILD_DEST_DIR}" && echo -e "Removing ${BUILD_DEST_DIR} directory" ) || echo "./${BUILD_DEST_DIR} does not exist"
-    [[ -e ./${BUILD_DEST_DIR}.deb ]] && rm "./${BUILD_DEST_DIR}.deb" && echo -e "Removing ${BUILD_DEST_DIR}.deb package" || echo "./${BUILD_DEST_DIR}.deb does not exist"
+    ( [[ -d ./${buld_dest_dir} ]] && rm -fR "./${buld_dest_dir}" && echo -e "Removing ${buld_dest_dir} directory" ) || echo "./${buld_dest_dir} does not exist"
+    [[ -e ./${buld_dest_dir}.deb ]] && rm "./${buld_dest_dir}.deb" && echo -e "Removing ${buld_dest_dir}.deb package" || echo "./${buld_dest_dir}.deb does not exist"
 }
 
 
 function clean()
 {
-    CLEAN_TARGET=$(make -npq : 2> /dev/null |     awk -v RS= -F: '$1 ~ /^[^#%.]+$/ { print $1 }' | grep clean)
-    if [[ -n "${CLEAN_TARGET}" ]] ; then
-        make  "BUILD=${WORKING_DIRECTORY}${BUILD_PREFIX}" clean
+    clean_target=$(make -npq : 2> /dev/null |     awk -v RS= -F: '$1 ~ /^[^#%.]+$/ { print $1 }' | grep clean)
+    if [[ -n "${clean_target}" ]] ; then
+        make  "BUILD=${working_dir}${build_prefix}" clean
     else
         echo "No existe el objetivo \"clean\" en este Makefile"
     fi
@@ -400,7 +392,7 @@ function mssg_help()
 Description: $(basename $0) builds a .deb package from sources.
 
 Usage:
-  $(basename $0) [-h] [-y] [-c -r -d] <SOURCE_DIRECTORY>  [<WORKING_DIRECTORY>]
+  $(basename $0) [-h] [-y] [-c -r -d] <SOURCE_DIRECTORY>  [<working_dir>]
 
 <SOURCE_DIRECTORY>
         Containing at least a "source" directory with its make files
@@ -411,14 +403,13 @@ Usage:
         the script will create.
         
         If a <WORKING_DIRECTORY>  is not passsed as argument
-        it will use the current directory.
+        it will use the current working directory.
 
 Options:
   -h  Shows this message.
   -y  It assume YES for all questions: prepare, build and install.
   -c  Execute clean from sources Makefile .
   -r  Removes the tree root directories of DEB package.
-  -d  Removes "src" symlink.
 
 A source directory is mandatory and a "Makefile" that
 recreates the files tree in the package root directory.
@@ -448,7 +439,7 @@ eval set -- "$OPTIONS"
 while true ; do 
     case $1 in 
             -y)
-                GLOBAL_IN='y'
+                GLOBAL_INPUT='y'
                 shift
                 ;;
             -h)
@@ -467,12 +458,13 @@ while true ; do
                 shift
                 ;;
             --)
-                check_user
-                shift
+                check_user ; shift
+                
                 if [[ -n $1 ]] ; then
-                    SOURCE_DIRECTORY=$(realpath ${1})
+                    source_dir=$(realpath ${1})
                     shift
                 fi
+                
                 check_sources
 
                 if [[ -n $1 ]] ; then
@@ -486,20 +478,16 @@ while true ; do
                     echo -e "\"${WD}\""
                     echo -e "as project root directory"
                 fi
-                working_directory ${WD}
-
-                if  [[ -n "${REMOVE}" ]] ; then
-                    remove
-                fi
                 
-                if  [[ -n "${CLEAN}" ]] ; then
-                    clean
-                fi
+                set_working_directory ${WD}
+                [[ -n "${REMOVE}" ]] && remove
+                [[ -n "${CLEAN}" ]] && clean
                 ${EXIT}
-                read_control_file && edit_file ${CONTROL_FILE}
+                read_control_file && edit_file ${control_file}
                 change_version
                 prepare 
                 create 
+                
                 echo
                 break
                 ;;
