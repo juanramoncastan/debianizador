@@ -310,17 +310,19 @@ function change_version()
     ##         "Makefile"
     
     local warning=""
-    VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
+    VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' \
+                -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
     while [[ -z ${VERSION} ]] || [[ ! ${VERSION} =~ ^[0-9]+\.[0-9]+([.]+[0-9]+)?([-]+.+)?$ ]]  ; do
         echo -e "Please, set version${warning}"
         new_version=''
         sed "/^Version:.*/!d" ${CONTROL_FILE}
         read -p ">> " new_version ; warning="${warning}!!"
         sed -i -e "s/\(^Version:\)\( *\)\(.*\)/\1 ${new_version}/" ${CONTROL_FILE}
-        VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
+        VERSION=$(sed -e '/^Version/!d' -e 's/Version:[[:space:]]\+\([[:alnum:]]\+.*\)/\1/' \
+                -e "s/[[:space:]]\+//g" ${CONTROL_FILE})
     done
 
-    local files_w_version=$(find -L ${SOURCE_DIR} -type f -not -name "control" \( -exec grep -l -e "^#\{0,1\}[[:space:]]*Version:[[:space:]]\+[[:digit:]]\+.*" {} \; \)  )
+    local files_w_version=$(find -L ${SOURCE_DIR} -type f -not -name "control" \(-exec grep -l -e "^#\{0,1\}[[:space:]]*Version:[[:space:]]\+[[:digit:]]\+.*" {} \; \) )
     echo -e "Changing the next files to \"Version: ${VERSION}\""
     for file in ${files_w_version} ; do
         echo -ne "From $(sed -e "/Version:[[:space:]]\+[[:digit:]]\+.*/!d" -e "s/^#* *\(Version:.*\)$/\1/" ${file})"
@@ -355,9 +357,11 @@ EOF
         cd "${SOURCE_DIR}${SRC}"
         echo "${SOURCE_DIR}${SRC}"
         echo
-        ( [[ -e ./Makefile ]] \
-                && make  "BUILD=${WORKING_DIR}${BUILD_PREFIX}" install ) \
-                || exit 1 
+        if [[ -e ./Makefile ]]; then
+            make  "BUILD=${WORKING_DIR}${BUILD_PREFIX}" install )
+        else
+            exit 1 
+        fi
     else
         exit 0
     fi
@@ -391,14 +395,8 @@ function create()
 function remove()
 {
     cd "${WORKING_DIR}"
-    echo -e "Removing debian root directory, package and symbolic link"
+    echo -e "Removing debian package root directory and package"
     read_control_file  > /dev/null
-    if [[ $(find . -maxdepth 1 -mindepth 1 -type l) =~ "${SRC}" ]] ; then
-        rm ./${SRC} && echo "Removing \"${SRC}\" symlink"
-    else
-        echo "Symbolic link \"${SRC}\" does not exist"
-    fi
-
     ( [[ -d ./${BUILD_DEST_DIR} ]] && rm -fR "./${BUILD_DEST_DIR}" \
             && echo -e "Removing ${BUILD_DEST_DIR} directory" ) \
             || echo "./${BUILD_DEST_DIR} does not exist"
