@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------
 
 # ###########     debianizador  Makefile   ###########################
-# Version: 1.5
+# Version: 1.5.1
 
 #####  BUILD = "../package-name_version_architecture" given from "debianizador" script
 PROJECT=debianizador
@@ -31,7 +31,6 @@ ifneq ($(PREFIX),)
 	@ mkdir -p $(BUILD)$(PREFIX)$(BIN_PATH)
 	@ cp .$(BIN_PATH)/* $(BUILD)$(PREFIX)$(BIN_PATH)
 endif
-
 
 uninstall: test
 	@ echo

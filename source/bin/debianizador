@@ -2,7 +2,7 @@
 
 
 # debianizador 
-# Version: 1.5
+# Version: 1.5.1
 # Author: monon
 
 
@@ -346,7 +346,7 @@ function change_version()
 }
 
 
-function prepare()
+function prepare_building()
 {
     local input_read=${1}
     local mssg=$( cat << EOF
@@ -386,7 +386,7 @@ EOF
 }
 
 
-function create()
+function build_package()
 {
     local input_read=${1}
     echo
@@ -541,8 +541,8 @@ while true ; do
                 check_sources
                 read_control_file && edit_file ${CONTROL_FILE}
                 change_version
-                prepare 
-                create 
+                prepare_building 
+                build_package 
 
                 echo
                 break
