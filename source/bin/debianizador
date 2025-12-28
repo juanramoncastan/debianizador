@@ -491,66 +491,66 @@ eval set -- "$OPTIONS"
 
 while true ; do 
     case $1 in 
-            -y)
-                GLOBAL_YES="y"
+        -y)
+            GLOBAL_YES="y"
+            shift
+            ;;
+        -h)
+            mssg_help
+            shift
+            exit 0
+            ;;
+        -r)
+            REMOVE="Y"
+            EXIT="exit 0"
+            shift
+            ;;
+        -c)
+            CLEAN="Y"
+            EXIT="exit 0"
+            shift
+            ;;
+        --)
+            check_user ; shift
+
+            if [[ -n $1 ]] ; then
+                SOURCE_DIR=$(realpath ${1})
                 shift
-                ;;
-            -h)
-                mssg_help
+            else
+                SOURCE_DIR=$(realpath $PWD)
+            fi
+
+            if [[ -n "${1}" ]] ; then
+                WD=$(realpath ${1})
                 shift
-                exit 0
-                ;;
-            -r)
-                REMOVE="Y"
-                EXIT="exit 0"
-                shift
-                ;;
-            -c)
-                CLEAN="Y"
-                EXIT="exit 0"
-                shift
-                ;;
-            --)
-                check_user ; shift
+            else
+                WD=${PWD}
+                echo -ne "${RED}${SCRIPT_NAME}${NORMAL}: "
+                echo -e "Argument <WORKING_DIRECTORY> is not passed"
+                echo -ne "${RED}${SCRIPT_NAME}${NORMAL}: "
+                echo -e "It will use current directory as project root directory"
+                echo -e "    ${WD}"
 
-                if [[ -n $1 ]] ; then
-                    SOURCE_DIR=$(realpath ${1})
-                    shift
-                else
-                    SOURCE_DIR=$(realpath $PWD)
-                fi
+            fi
 
-                if [[ -n "${1}" ]] ; then
-                    WD=$(realpath ${1})
-                    shift
-                else
-                    WD=${PWD}
-                    echo -ne "${RED}${SCRIPT_NAME}${NORMAL}: "
-                    echo -e "Argument <WORKING_DIRECTORY> is not passed"
-                    echo -ne "${RED}${SCRIPT_NAME}${NORMAL}: "
-                    echo -e "It will use current directory as project root directory"
-                    echo -e "    ${WD}"
+            set_working_directory ${WD}
 
-                fi
+            [[ -n "${REMOVE}" ]] && remove
+            [[ -n "${CLEAN}" ]] && clean
+            ${EXIT}
+            check_sources
+            read_control_file && edit_file ${CONTROL_FILE}
+            change_version
+            prepare_building 
+            build_package 
 
-                set_working_directory ${WD}
-
-                [[ -n "${REMOVE}" ]] && remove
-                [[ -n "${CLEAN}" ]] && clean
-                ${EXIT}
-                check_sources
-                read_control_file && edit_file ${CONTROL_FILE}
-                change_version
-                prepare_building 
-                build_package 
-
-                echo
-                break
-                ;;
-            *)
-                shift
-                exit 1
-                ;;
+            echo
+            break
+            ;;
+        *)
+            shift
+            exit 1
+            ;;
     esac
 done
 
