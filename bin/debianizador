@@ -2,12 +2,11 @@
 
 
 # debianizador 
-# Version: 1.5.1
+# Version: 1.6.0
 # Author: monon
 
 
 SCRIPT_NAME=$(basename ${0})
-SRC="/source"
 CONTROL_FILE="./debian/control"
 WORKING_DIR=""
 BUILD_PREFIX=""
@@ -58,10 +57,10 @@ function set_working_directory()
 function check_sources()
 {
     echo
-    if [[ -e "${SOURCE_DIR}${SRC}"  ]] ; then
-        echo -e "${GREEN}${SCRIPT_NAME}${NORMAL}: Source directory:\n  ${SOURCE_DIR}${SRC}"
+    if [[ -e "${SOURCE_DIR}"  ]] ; then
+        echo -e "${GREEN}${SCRIPT_NAME}${NORMAL}: Source directory:\n  ${SOURCE_DIR}"
     else
-        echo -e "${RED}${SCRIPT_NAME}${NORMAL}: Directory ${SRC} does not exist into"
+        echo -e "${RED}${SCRIPT_NAME}${NORMAL}: Directory does not exist into"
         echo -e "    ${SOURCE_DIR}"
         echo
         exit 2
@@ -369,8 +368,8 @@ EOF
         [[ -e .debian/postrm ]] && chmod +x .debian/postrm
         mkdir -p "./${BUILD_DEST_DIR}/DEBIAN"
         cp ./debian/* ./${BUILD_DEST_DIR}/DEBIAN/
-        cd "${SOURCE_DIR}${SRC}"
-        echo -e "${SOURCE_DIR}${SRC}"
+        cd "${SOURCE_DIR}"
+        echo -e "${SOURCE_DIR}"
         echo
         if [[ -e ./Makefile ]]; then
             make  "BUILD=${WORKING_DIR}${BUILD_PREFIX}" install
