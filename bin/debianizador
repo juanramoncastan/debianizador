@@ -2,7 +2,7 @@
 
 
 # debianizador 
-# Version: 1.6.0
+# Version: 1.6.1
 # Author: monon
 
 
@@ -362,21 +362,10 @@ EOF
     echo
     if [[ "$input_read" =~ ^[Yy]$ ]] ; then
         echo -e "${GREEN}${SCRIPT_NAME}${NORMAL}: Preparing files tree to build the package"
-        [[ -e .debian/preinst ]] && chmod +x .debian/preinst
-        [[ -e .debian/prerm ]] && chmod +x .debian/prerm
-        [[ -e .debian/postinst ]] && chmod +x .debian/postinst
-        [[ -e .debian/postrm ]] && chmod +x .debian/postrm
-        mkdir -p "./${BUILD_DEST_DIR}/DEBIAN"
-        cp ./debian/* ./${BUILD_DEST_DIR}/DEBIAN/
-        cd "${SOURCE_DIR}"
-        echo -e "${SOURCE_DIR}"
-        echo
-        if [[ -e ./Makefile ]]; then
-            make  "BUILD=${WORKING_DIR}${BUILD_PREFIX}" install
-        else
-            echo -e "Error: Makefile does not exist"
-            exit 1 
-        fi
+        
+        prepare_make
+        prepare_DEBIAN
+    
     else
         echo -e "${GREEN}${SCRIPT_NAME}${NORMAL}: Exiting"
         exit 0
@@ -384,6 +373,29 @@ EOF
     echo
 }
 
+function prepare_make () {
+    ## Makefile
+    cd "${SOURCE_DIR}"
+    echo -e "${SOURCE_DIR}"
+    echo
+    if [[ -e ./Makefile ]]; then
+        make  "BUILD=${WORKING_DIR}${BUILD_PREFIX}" install
+    else
+        echo -e "Error: Makefile does not exist"
+        exit 1 
+    fi
+}
+
+function prepare_DEBIAN () {
+    ## DEBIAN files
+    cd "${WORKING_DIR}" 
+    [[ -e .debian/preinst ]] && chmod 755 .debian/preinst
+    [[ -e .debian/prerm ]] && chmod 755 .debian/prerm
+    [[ -e .debian/postinst ]] && chmod 755 .debian/postinst
+    [[ -e .debian/postrm ]] && chmod 755 .debian/postrm
+    mkdir -p "./${BUILD_DEST_DIR}/DEBIAN"
+    cp ./debian/* ./${BUILD_DEST_DIR}/DEBIAN/
+}
 
 function build_package()
 {

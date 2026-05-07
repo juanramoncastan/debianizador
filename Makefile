@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------
 
 # ###########  debianizador  Makefile  ###########################
-# Version: 1.6.0
+# Version: 1.6.1
 
 #####  BUILD = "../package-name_version_architecture" given from "debianizador" script
 PROJECT=debianizador
