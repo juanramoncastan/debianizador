@@ -1,0 +1,8 @@
+Package: debianizador
+Version: 1.7.0
+Section: admin
+Priority: optional
+Architecture: all
+Depends: 
+Maintainer: Juan Ramon Castan
+Description: Easy and useful Debian Package creator

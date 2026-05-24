@@ -15,9 +15,10 @@
 # ----------------------------------------------------------------------
 
 # ###########  debianizador  Makefile  ###########################
-# Version: 1.6.1
+# Version: 1.7.0
+# BUILD = "../package-name_version_architecture" given from "debianizador" app
 
-#####  BUILD = "../package-name_version_architecture" given from "debianizador" script
+BUILD =
 PROJECT=debianizador
 PREFIX = /usr
 BIN_PATH = /bin
